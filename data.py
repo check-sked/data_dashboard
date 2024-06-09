@@ -151,7 +151,7 @@ class Data:
             df2['date'] = pd.to_datetime(df2['date'])
             df2 = df2.sort_values('date')
 
-            url3 = "https://api.dune.com/api/v1/query/3802801/results?api_key=QNbgCiZU7kgHRE1GZMvO2jEflSgGSu3h"
+            url3 = f"https://api.dune.com/api/v1/query/3802801/results?api_key={dune_api_key}"
             response3 = requests.get(url3)
             data3 = response3.json()
             rows3 = data3['result']['rows']
