@@ -61,7 +61,7 @@ class App:
             self.tabEthereumL2()
 
     def tabHome(self):
-        st.header("TEXT TEXT TEXT")
+        st.header("Featured Charts")
 
 # Validators Tab ---------------------------------------------------------------------------------
     def tabEthereumValidators(self):
