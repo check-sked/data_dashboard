@@ -133,7 +133,9 @@ class Data:
 
     def fetchEthereumL2Data(self):
         try:
-            url1 = "https://api.dune.com/api/v1/query/3802761/results?api_key=QNbgCiZU7kgHRE1GZMvO2jEflSgGSu3h"
+            dune_api_key = st.secrets["dune_api_key"]
+
+            url1 = f"https://api.dune.com/api/v1/query/3802761/results?api_key={dune_api_key}"
             response1 = requests.get(url1)
             data1 = response1.json()
             rows1 = data1['result']['rows']
@@ -141,7 +143,7 @@ class Data:
             df1['date'] = pd.to_datetime(df1['date'])
             df1 = df1.sort_values('date')
 
-            url2 = "https://api.dune.com/api/v1/query/3799191/results?api_key=QNbgCiZU7kgHRE1GZMvO2jEflSgGSu3h"
+            url2 = f"https://api.dune.com/api/v1/query/3799191/results?api_key={dune_api_key}"
             response2 = requests.get(url2)
             data2 = response2.json()
             rows2 = data2['result']['rows']
