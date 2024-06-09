@@ -1,4 +1,5 @@
-plotly==5.16.0
-python-dotenv==0.19.2
-pandas==1.3.5
-# add dune-client and get version
+streamlit
+pandas
+plotly
+requests
+boto3
