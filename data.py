@@ -8,13 +8,16 @@ class Data:
     def __init__(self):
         aws_access_key_id = st.secrets["aws_access_key_id"]
         aws_secret_access_key = st.secrets["aws_secret_access_key"]
-
+        aws_bucket_name = st.secrets["aws_bucket_name"]
+        aws_validator_file_name = st.secrets["aws_validator_file_name"]
+        region_name = st.secrets["region_name"]
+        
         self.s3 = boto3.client('s3',
                             aws_access_key_id=aws_access_key_id,
                             aws_secret_access_key=aws_secret_access_key,
-                            region_name="us-east-2")
-        self.bucket_name = "testdatabucketboi"
-        self.file_name = "validators.json"
+                            region_name=region_name)
+        self.bucket_name = aws_bucket_name
+        self.file_name = aws_validator_file_name
         
         self.scaling = [0, 327680, 393216, 458752, 524288, 589824, 655360, 720896, 786432, 851968, 917504, 983040, 1048576, 1114112, 1179648, 1245184, 1310720, 1376256, 1441792, 1507328, 1572864, 1638400, 1703936, 1769472, 1835008, 1900544, 1966080, 2031616, 2097152, 2162688, 2228224, 2293760, 2359296, 2424832, 2490368, 2555904, 2621440, 2686976, 2752512]
         self.epoch_churn = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
