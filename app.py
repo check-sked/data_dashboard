@@ -294,7 +294,7 @@ class App:
             st.download_button(label="CSV", data=csv_l2_1, file_name='ethereum_l2_transactions.csv', mime='text/csv')
 
             fig_l2_2 = go.Figure()
-            for column in ['Arbitrum', 'Optimism', 'Base', 'Linea', 'Mantle', 'Polygon zkEVM', 'Scroll', 'ZkSync', 'Zora']:
+            for column in ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'Optimism', 'Polygon zkEVM', 'Scroll', 'ZkSync', 'Zora']:
                 fig_l2_2.add_trace(go.Bar(x=df_l2_2['date'], y=df_l2_2[column], name=column))
 
             fig_l2_2.update_layout(

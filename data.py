@@ -135,7 +135,7 @@ class Data:
         try:
             dune_api_key = st.secrets["dune_api_key"]
 
-            url1 = f"https://api.dune.com/api/v1/query/3802761/results?api_key={dune_api_key}"
+            url1 = f"https://api.dune.com/api/v1/query/3705053/results?api_key={dune_api_key}"
             response1 = requests.get(url1)
             data1 = response1.json()
             rows1 = data1['result']['rows']
@@ -143,7 +143,7 @@ class Data:
             df1['date'] = pd.to_datetime(df1['date'])
             df1 = df1.sort_values('date')
 
-            url2 = f"https://api.dune.com/api/v1/query/3799191/results?api_key={dune_api_key}"
+            url2 = f"https://api.dune.com/api/v1/query/3635617/results?api_key={dune_api_key}"
             response2 = requests.get(url2)
             data2 = response2.json()
             rows2 = data2['result']['rows']
