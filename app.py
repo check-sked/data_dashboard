@@ -72,10 +72,11 @@ class App:
             df_entry_wait = self.data_instance.fetchEntryWait()
             df_exit_wait = self.data_instance.fetchExitWait()
             df_validators_churn = self.data_instance.fetchValidatorsAndChurn()
-            df1 = self.data_instance.fetchStakingRate()
+            df_apr = self.data_instance.fetchAPR()
             df2 = self.data_instance.fetchStakedAmount()
             df3 = self.data_instance.fetchEntryQueue()
             df4 = self.data_instance.fetchExitQueue()
+            df_staking_apy = self.data_instance.fetchStakingAPY()
 
         if (
             df_entry_wait is not None
@@ -84,8 +85,8 @@ class App:
             and not df_exit_wait.empty
             and df_validators_churn is not None
             and not df_validators_churn.empty
-            and df1 is not None
-            and not df1.empty
+            and df_apr is not None
+            and not df_apr.empty
             and df2 is not None
             and not df2.empty
             and df3 is not None
@@ -101,10 +102,10 @@ class App:
             time.sleep(1)
             success_message.empty()
 
-            # Display staking APR and staked ETH amount in big bold numbers
+            # Display APR and staked ETH amount in big bold numbers
             col1, col2 = st.columns(2)
             with col1:
-                latest_apr = df1['apr'].iloc[-1]
+                latest_apr = df_apr['apr'].iloc[-1]
                 st.markdown(f"<div style='text-align: center;'><div style='font-size: 48px; font-weight: bold;'>{latest_apr:.2f}%</div><div style='font-size: 24px;'>Staking APR</div></div>", unsafe_allow_html=True)
             with col2:
                 latest_staked_amount = df2['staked_amount'].iloc[-1] / 1_000_000
@@ -112,7 +113,7 @@ class App:
 
             # Period selection bar
             time_periods = {'7d': 7, '30d': 30, '90d': 90, '180d': 180, '365d': 365, 'All': None}
-            selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=1, label_visibility='collapsed')
+            selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=2, label_visibility='collapsed')
 
             # Filter data based on selected time period
             if time_periods[selected_period] is not None:
@@ -121,17 +122,19 @@ class App:
                 mask_entry_wait = (df_entry_wait['Date'] >= min_date) & (df_entry_wait['Date'] <= max_date)
                 mask_exit_wait = (df_exit_wait['Date'] >= min_date) & (df_exit_wait['Date'] <= max_date)
                 mask_validators_churn = (df_validators_churn['Date'] >= min_date) & (df_validators_churn['Date'] <= max_date)
-                mask1 = (df1['Date'] >= min_date) & (df1['Date'] <= max_date)
+                mask_apr = (df_apr['Date'] >= min_date) & (df_apr['Date'] <= max_date)
                 mask2 = (df2['Date'] >= min_date) & (df2['Date'] <= max_date)
                 mask3 = (df3['Date'] >= min_date) & (df3['Date'] <= max_date)
                 mask4 = (df4['Date'] >= min_date) & (df4['Date'] <= max_date)
+                mask_staking_apy = (df_staking_apy['Date'] >= min_date) & (df_staking_apy['Date'] <= max_date)
                 df_entry_wait = df_entry_wait.loc[mask_entry_wait]
                 df_exit_wait = df_exit_wait.loc[mask_exit_wait]
                 df_validators_churn = df_validators_churn.loc[mask_validators_churn]
-                df1 = df1.loc[mask1]
+                df_apr = df_apr.loc[mask_apr]
                 df2 = df2.loc[mask2]
                 df3 = df3.loc[mask3]
                 df4 = df4.loc[mask4]
+                df_staking_apy = df_staking_apy.loc[mask_staking_apy]
 
             # Side by side entry/exit wait charts
             col1, col2 = st.columns(2)
@@ -163,6 +166,23 @@ class App:
                 csv_exit_wait = df_exit_wait.to_csv(index=False)
                 st.download_button(label="CSV", data=csv_exit_wait, file_name='exit_wait.csv', mime='text/csv')
 
+            # Staking APY stacked bar chart
+            fig_staking_apy = go.Figure()
+            fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly Issuance APY'] * 100, name='Inflation'))
+            fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly MEV APY'] * 100, name='MEV'))
+            fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly TIPS APY'] * 100, name='Tips'))
+            fig_staking_apy.update_layout(
+                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Beaconcha.in, Galaxy Research</span>',
+                xaxis_title='Date',
+                yaxis_title='APY (%)',
+                barmode='stack',
+                legend=dict(x=0, y=1, orientation='h')
+            )
+            st.plotly_chart(fig_staking_apy, use_container_width=True)
+
+            csv_staking_apy = df_staking_apy[['Date', 'Yearly Issuance APY', 'Yearly MEV APY', 'Yearly TIPS APY']].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_staking_apy, file_name='staking_apy_breakdown.csv', mime='text/csv')
+
             # Validator count and churn chart
             fig_validators_churn = go.Figure()
             fig_validators_churn.add_trace(
@@ -193,20 +213,6 @@ class App:
 
             csv_validators_churn = df_validators_churn.to_csv(index=False)
             st.download_button(label="CSV", data=csv_validators_churn, file_name='validators_churn.csv', mime='text/csv')
-
-            # Staking APR chart
-            fig1 = go.Figure()
-            fig1.add_trace(go.Scatter(x=df1['Date'], y=df1['apr'], mode='lines', name='APR'))
-            fig1.update_layout(
-                title='Staking APR<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
-                xaxis_title='Date',
-                yaxis_title='APR',
-                legend=dict(x=0, y=1, orientation='h')
-            )
-            st.plotly_chart(fig1, use_container_width=True)
-
-            csv_staking_rate = df1.to_csv(index=False)
-            st.download_button(label="CSV", data=csv_staking_rate, file_name='staking_rate.csv', mime='text/csv')
 
             # Staked ETH amount and % of total ETH staked
             fig2 = go.Figure()
@@ -254,6 +260,7 @@ class App:
 
         else:
             st.warning("Data fetching was incomplete. Please try running the app again.")
+
 # Layer 2s Tab ---------------------------------------------------------------------------------
     def tabEthereumL2(self):
         st.header("Ethereum L2 Data")

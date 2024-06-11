@@ -10,6 +10,7 @@ class Data:
         aws_secret_access_key = st.secrets["aws_secret_access_key"]
         aws_bucket_name = st.secrets["aws_bucket_name"]
         aws_validator_file_name = st.secrets["aws_validator_file_name"]
+        aws_staking_rate_file_name = st.secrets["aws_staking_rate_file_name"]
         region_name = st.secrets["region_name"]
         
         self.s3 = boto3.client('s3',
@@ -18,6 +19,7 @@ class Data:
                             region_name=region_name)
         self.bucket_name = aws_bucket_name
         self.file_name = aws_validator_file_name
+        self.aws_staking_rate_file_name = aws_staking_rate_file_name
         
         self.scaling = [0, 327680, 393216, 458752, 524288, 589824, 655360, 720896, 786432, 851968, 917504, 983040, 1048576, 1114112, 1179648, 1245184, 1310720, 1376256, 1441792, 1507328, 1572864, 1638400, 1703936, 1769472, 1835008, 1900544, 1966080, 2031616, 2097152, 2162688, 2228224, 2293760, 2359296, 2424832, 2490368, 2555904, 2621440, 2686976, 2752512]
         self.epoch_churn = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
@@ -82,7 +84,29 @@ class Data:
             st.error(f"General Error: {e}")
             return None
 
-    def fetchStakingRate(self):
+    # For the bar chart
+    def fetchStakingAPY(self):
+        try:
+            s3 = boto3.client('s3',
+                            aws_access_key_id=st.secrets["aws_access_key_id"],
+                            aws_secret_access_key=st.secrets["aws_secret_access_key"],
+                            region_name=st.secrets["region_name"])
+            bucket_name = st.secrets["aws_bucket_name"]
+            aws_staking_rate_file_name = st.secrets["aws_staking_rate_file_name"]
+            
+            response = s3.get_object(Bucket=bucket_name, Key=self.aws_staking_rate_file_name)
+            json_data = response['Body'].read().decode('utf-8')
+            data = json.loads(json_data)
+            df = pd.DataFrame(data)
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df.sort_values('Date')
+            return df
+        except Exception as e:
+            st.error(f"Error retrieving staking APY data from S3: {e}")
+            return None
+        
+    # For the header
+    def fetchAPR(self):
         try:
             data = self.fetch_json_data()
             df = pd.DataFrame(data)
