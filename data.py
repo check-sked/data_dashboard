@@ -138,7 +138,7 @@ class Data:
         try:
             dune_api_key = st.secrets["dune_api_key"]
 
-            url1 = f"https://api.dune.com/api/v1/query/3705053/results?api_key={dune_api_key}"
+            url1 = f"https://api.dune.com/api/v1/query/3802801/results?api_key={dune_api_key}"
             response1 = requests.get(url1)
             data1 = response1.json()
             rows1 = data1['result']['rows']

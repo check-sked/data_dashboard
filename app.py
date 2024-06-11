@@ -279,7 +279,8 @@ class App:
                 df_l2_3 = df_l2_3.loc[mask_l2_3]
 
             fig_l2_1 = go.Figure()
-            for column in df_l2_1.columns[:-1]:
+            columns = ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
+            for column in columns:
                 fig_l2_1.add_trace(go.Bar(x=df_l2_1['date'], y=df_l2_1[column], name=column))
 
             fig_l2_1.update_layout(
@@ -289,8 +290,8 @@ class App:
                 barmode='stack'
             )
             st.plotly_chart(fig_l2_1, use_container_width=True)
-            
-            csv_l2_1 = df_l2_1.to_csv(index=False)
+
+            csv_l2_1 = df_l2_1[['date'] + columns].to_csv(index=False)
             st.download_button(label="CSV", data=csv_l2_1, file_name='ethereum_l2_transactions.csv', mime='text/csv')
 
             fig_l2_2 = go.Figure()
