@@ -12,7 +12,7 @@ class App:
 
     def appSetup(self):
         #st.set_page_config(layout="wide")
-        st.title("Hello World!")
+        st.title("Galaxy Research Dashboard")
 
         # Create a horizontal navigation bar
         selected_tab = st.radio(
@@ -142,7 +142,7 @@ class App:
                 fig_entry_wait = go.Figure()
                 fig_entry_wait.add_trace(go.Scatter(x=df_entry_wait['Date'], y=df_entry_wait['entry_wait'], mode='lines', name='Entry Wait'))
                 fig_entry_wait.update_layout(
-                    title='Entry Wait (Days)<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                    title='Entry Wait (Days)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                     xaxis_title='Date',
                     yaxis_title='Entry Wait (Days)',
                     legend=dict(x=0, y=1, orientation='h')
@@ -156,7 +156,7 @@ class App:
                 fig_exit_wait = go.Figure()
                 fig_exit_wait.add_trace(go.Scatter(x=df_exit_wait['Date'], y=df_exit_wait['exit_wait'], mode='lines', name='Exit Wait'))
                 fig_exit_wait.update_layout(
-                    title='Exit Wait (Days)<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                    title='Exit Wait (Days)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                     xaxis_title='Date',
                     yaxis_title='Exit Wait (Days)',
                     legend=dict(x=0, y=1, orientation='h')
@@ -172,7 +172,7 @@ class App:
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly MEV APY'] * 100, name='MEV'))
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly TIPS APY'] * 100, name='Tips'))
             fig_staking_apy.update_layout(
-                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Beaconcha.in, Galaxy Research</span>',
+                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Flipside Crypto</span>',
                 xaxis_title='Date',
                 yaxis_title='APY (%)',
                 barmode='stack',
@@ -182,6 +182,23 @@ class App:
 
             csv_staking_apy = df_staking_apy[['Date', 'Yearly Issuance APY', 'Yearly MEV APY', 'Yearly TIPS APY']].to_csv(index=False)
             st.download_button(label="CSV", data=csv_staking_apy, file_name='staking_apy_breakdown.csv', mime='text/csv')
+
+            # Validator Revenue by Source stacked bar chart
+            fig_validator_revenue = go.Figure()
+            fig_validator_revenue.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Total Native Issuance'], name='Inflation'))
+            fig_validator_revenue.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['MEV'], name='MEV'))
+            fig_validator_revenue.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['TIPS'], name='Tips'))
+            fig_validator_revenue.update_layout(
+                title='Validator Revenue by Source (ETH)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Flipside Crypto</span>',
+                xaxis_title='Date',
+                yaxis_title='Revenue (ETH)',
+                barmode='stack',
+                legend=dict(x=0, y=1, orientation='h')
+            )
+            st.plotly_chart(fig_validator_revenue, use_container_width=True)
+
+            csv_validator_revenue = df_staking_apy[['Date', 'Total Native Issuance', 'MEV', 'TIPS']].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_validator_revenue, file_name='validator_revenue.csv', mime='text/csv')
 
             # Validator count and churn chart
             fig_validators_churn = go.Figure()
@@ -203,7 +220,7 @@ class App:
                 )
             )
             fig_validators_churn.update_layout(
-                title='Validators and Churn<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                title='Validators and Churn<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Validators',
                 yaxis2=dict(title='Churn', side='right', overlaying='y'),
@@ -219,7 +236,7 @@ class App:
             fig2.add_trace(go.Scatter(x=df2['Date'], y=df2['staked_amount'], mode='lines', name='Staked Amount'))
             fig2.add_trace(go.Scatter(x=df2['Date'], y=df2['staked_percent'], mode='lines', name='Staked Percent', yaxis='y2'))
             fig2.update_layout(
-                title='Staked Amount and Percentage<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                title='Staked Amount and Percentage<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Staked Amount',
                 yaxis2=dict(title='Staked Percent', side='right', overlaying='y'),
@@ -234,7 +251,7 @@ class App:
             fig3 = go.Figure()
             fig3.add_trace(go.Scatter(x=df3['Date'], y=df3['entry_queue'], mode='lines', name='Entry Queue'))
             fig3.update_layout(
-                title='Entry Queue<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                title='Entry Queue<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Entry Queue',
                 legend=dict(x=0, y=1, orientation='h')
@@ -248,7 +265,7 @@ class App:
             fig4 = go.Figure()
             fig4.add_trace(go.Scatter(x=df4['Date'], y=df4['exit_queue'], mode='lines', name='Exit Queue'))
             fig4.update_layout(
-                title='Exit Queue<br><span style="font-size: 12px; font-style: italic;">Source: beaconcha.in, Galaxy Research</span>',
+                title='Exit Queue<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Exit Queue',
                 legend=dict(x=0, y=1, orientation='h')
@@ -291,7 +308,7 @@ class App:
                 fig_l2_1.add_trace(go.Bar(x=df_l2_1['date'], y=df_l2_1[column], name=column))
 
             fig_l2_1.update_layout(
-                title='Ethereum L2 Transactions<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
+                title='Ethereum L2 Transactions<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Transaction Count',
                 barmode='stack'
@@ -306,7 +323,7 @@ class App:
                 fig_l2_2.add_trace(go.Bar(x=df_l2_2['date'], y=df_l2_2[column], name=column))
 
             fig_l2_2.update_layout(
-                title='Ethereum L2 Daily Active Addresses (Unfiltered)<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
+                title='Ethereum L2 Daily Active Addresses (Unfiltered)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Daily Active Addresses',
                 barmode='stack'
@@ -324,7 +341,7 @@ class App:
             fig_l2_3.add_trace(go.Scatter(x=df_l2_2['date'], y=df_l2_2['multi_share'], name='Multi Share', yaxis='y2', line=dict(color='purple', width=2)))
 
             fig_l2_3.update_layout(
-                title='Ethereum Single and Multi L2 DAAs<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
+                title='Ethereum Single and Multi L2 DAAs<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis=dict(title='Address Count'),
                 yaxis2=dict(title='Multi Share', overlaying='y', side='right', range=[0, 1]),
@@ -343,7 +360,7 @@ class App:
                 fig_l2_4.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3[column], name=column))
 
             fig_l2_4.update_layout(
-                title='Ethereum L2 Transactions (Detailed)<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
+                title='Ethereum L2 Transactions (Detailed)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Transaction Count',
                 legend=dict(x=0, y=1, orientation='h')
@@ -359,7 +376,7 @@ class App:
             fig_l2_5.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3['L2 % of Ethereum'], name='L2 % of Ethereum', yaxis='y2'))
 
             fig_l2_5.update_layout(
-                title='Combined L2 Transactions and L2 % of Ethereum<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
+                title='Combined L2 Transactions and L2 % of Ethereum<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis=dict(title='Combined L2 TXs'),
                 yaxis2=dict(title='L2 % of Ethereum', overlaying='y', side='right'),
