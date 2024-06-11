@@ -331,9 +331,9 @@ class App:
 
             # New chart for df_l2_3 (line chart)
             fig_l2_4 = go.Figure()
-            for column in df_l2_3.columns[:-3]:
-                if column not in ['Combined L2 TXs', 'L2 % of Ethereum']:
-                    fig_l2_4.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3[column], name=column))
+            columns = ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
+            for column in columns:
+                fig_l2_4.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3[column], name=column))
 
             fig_l2_4.update_layout(
                 title='Ethereum L2 Transactions (Detailed)<br><span style="font-size: 12px; font-style: italic;">Source: Dune, Galaxy Research</span>',
@@ -342,8 +342,8 @@ class App:
                 legend=dict(x=0, y=1, orientation='h')
             )
             st.plotly_chart(fig_l2_4, use_container_width=True)
-            
-            csv_l2_4 = df_l2_3.drop(columns=['Combined L2 TXs', 'L2 % of Ethereum']).to_csv(index=False)
+
+            csv_l2_4 = df_l2_3[['date'] + columns].to_csv(index=False)
             st.download_button(label="CSV", data=csv_l2_4, file_name='ethereum_l2_transactions_detailed.csv', mime='text/csv')
 
             # New chart for df_l2_3 (combined chart)
