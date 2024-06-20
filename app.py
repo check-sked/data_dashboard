@@ -202,6 +202,7 @@ class App:
 
             # Validator count and churn chart
             fig_validators_churn = go.Figure()
+
             fig_validators_churn.add_trace(
                 go.Scatter(
                     x=df_validators_churn['Date'],
@@ -210,15 +211,42 @@ class App:
                     name='Validators',
                 )
             )
+
             fig_validators_churn.add_trace(
                 go.Scatter(
                     x=df_validators_churn['Date'],
                     y=df_validators_churn['churn'],
                     mode='lines',
-                    name='Churn',
+                    name='Exit Churn',
                     yaxis='y2',
                 )
             )
+
+            # Create a copy of the DataFrame for the second churn line
+            df_validators_churn_hardcoded = df_validators_churn.copy()
+
+            # Find the index of March 13, 2024
+            hardcoded_date = '2024-03-13'
+            hardcoded_date_timestamp = pd.to_datetime(hardcoded_date)
+
+            # Check if the hardcoded date is within the date range of the DataFrame
+            if hardcoded_date_timestamp >= df_validators_churn_hardcoded['Date'].min():
+                # Set the churn value to 8 from March 13, 2024 onwards
+                df_validators_churn_hardcoded.loc[df_validators_churn_hardcoded['Date'] >= hardcoded_date_timestamp, 'churn'] = 8
+            else:
+                # Set the entire churn column to 8 if the hardcoded date is outside the date range
+                df_validators_churn_hardcoded['churn'] = 8
+
+            fig_validators_churn.add_trace(
+                go.Scatter(
+                    x=df_validators_churn_hardcoded['Date'],
+                    y=df_validators_churn_hardcoded['churn'],
+                    mode='lines',
+                    name='Entry Churn',
+                    yaxis='y2',
+                )
+            )
+
             fig_validators_churn.update_layout(
                 title='Validators and Churn<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
@@ -226,6 +254,7 @@ class App:
                 yaxis2=dict(title='Churn', side='right', overlaying='y'),
                 legend=dict(x=0, y=1, orientation='h')
             )
+
             st.plotly_chart(fig_validators_churn, use_container_width=True)
 
             csv_validators_churn = df_validators_churn.to_csv(index=False)
