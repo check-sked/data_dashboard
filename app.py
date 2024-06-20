@@ -257,7 +257,13 @@ class App:
 
             st.plotly_chart(fig_validators_churn, use_container_width=True)
 
-            csv_validators_churn = df_validators_churn.to_csv(index=False)
+            # Merge the original and hardcoded DataFrames
+            df_validators_churn_merged = pd.merge(df_validators_churn, df_validators_churn_hardcoded[['Date', 'churn']], on='Date', suffixes=('_exit', '_entry'))
+
+            # Rename the churn columns
+            df_validators_churn_merged.rename(columns={'churn_exit': 'Exit Churn', 'churn_entry': 'Entry Churn'}, inplace=True)
+
+            csv_validators_churn = df_validators_churn_merged.to_csv(index=False)
             st.download_button(label="CSV", data=csv_validators_churn, file_name='validators_churn.csv', mime='text/csv')
 
             # Staked ETH amount and % of total ETH staked
