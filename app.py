@@ -318,7 +318,7 @@ class App:
         st.header("Ethereum L2 Data")
 
         time_periods = {'7d': 7, '30d': 30, '90d': 90, '180d': 180, '365d': 365, 'All': None}
-        selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=1, label_visibility='collapsed')
+        selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=4, label_visibility='collapsed')
 
         with st.spinner('Fetching data...'):
             df_l2_transactions, df_l2_daa_unfiltered, df_l2_transactions_detailed = self.data_instance.fetchEthereumL2Data()
@@ -469,6 +469,42 @@ class App:
             
             csv_l2_combined_txs_and_percentage = df_l2_combined_txs_and_percentage[['date', 'Combined L2 TXs', 'L2 % of Ethereum']].to_csv(index=False)
             st.download_button(label="CSV", data=csv_l2_combined_txs_and_percentage, file_name='combined_l2_transactions_percentage.csv', mime='text/csv')
+
+            # Stacked summed L2 v. Ethereum TX Share
+            df_l2_vs_ethereum = df_l2_normalized.copy()
+            l2_columns = [col for col in columns if col != 'Ethereum']
+            df_l2_vs_ethereum['All L2 TXs'] = df_l2_vs_ethereum[l2_columns].sum(axis=1)
+            df_l2_vs_ethereum = df_l2_vs_ethereum[['Ethereum', 'All L2 TXs']]
+
+            fig_l2_vs_ethereum = go.Figure()
+
+            # Add Ethereum first (at the bottom) and color it black
+            fig_l2_vs_ethereum.add_trace(go.Bar(
+                x=df_l2_transactions_detailed['date'],
+                y=df_l2_vs_ethereum['Ethereum'],
+                name='Ethereum',
+                marker_color='black'
+            ))
+
+            # Add All L2 TXs
+            fig_l2_vs_ethereum.add_trace(go.Bar(
+                x=df_l2_transactions_detailed['date'],
+                y=df_l2_vs_ethereum['All L2 TXs'],
+                name='All L2 TXs',
+                marker_color='rgb(49,130,189)'  # You can change this color if desired
+            ))
+
+            fig_l2_vs_ethereum.update_layout(
+                title='Normalized Transaction Share: Ethereum vs All L2<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
+                xaxis_title='Date',
+                yaxis_title='Percentage Share',
+                barmode='stack',
+                legend=dict(x=0, y=1, orientation='h')
+            )
+            st.plotly_chart(fig_l2_vs_ethereum, use_container_width=True)
+
+            csv_l2_vs_ethereum = pd.concat([df_l2_transactions_detailed['date'], df_l2_vs_ethereum], axis=1).to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_vs_ethereum, file_name='ethereum_vs_all_l2_normalized_transaction_share.csv', mime='text/csv')
 
         else:
             st.warning("Data fetching was incomplete. Please try running the app again.")
