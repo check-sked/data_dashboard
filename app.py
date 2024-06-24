@@ -326,6 +326,8 @@ class App:
         if df_l2_transactions is not None and not df_l2_transactions.empty and df_l2_daa_unfiltered is not None and not df_l2_daa_unfiltered.empty and df_l2_transactions_detailed is not None and not df_l2_transactions_detailed.empty:
             st.success("Data successfully fetched.")
 
+            columns = ['Arbitrum', 'Base', 'Blast', 'Ethereum', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
+
             # Filter data based on selected time period
             if time_periods[selected_period] is not None:
                 max_date = df_l2_transactions['date'].max()
@@ -333,15 +335,24 @@ class App:
                 mask_l2_transactions = (df_l2_transactions['date'] >= min_date) & (df_l2_transactions['date'] <= max_date)
                 mask_l2_daa_unfiltered = (df_l2_daa_unfiltered['date'] >= min_date) & (df_l2_daa_unfiltered['date'] <= max_date)
                 mask_l2_transactions_detailed = (df_l2_transactions_detailed['date'] >= min_date) & (df_l2_transactions_detailed['date'] <= max_date)
+                
                 df_l2_transactions = df_l2_transactions.loc[mask_l2_transactions]
                 df_l2_daa_unfiltered = df_l2_daa_unfiltered.loc[mask_l2_daa_unfiltered]
                 df_l2_transactions_detailed = df_l2_transactions_detailed.loc[mask_l2_transactions_detailed]
 
+                # Create and filter df_l2_normalized here
+                df_l2_normalized = df_l2_transactions_detailed[columns].copy()
+                df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
+            else:
+                # If no time period is selected, create df_l2_normalized from the full dataset
+                df_l2_normalized = df_l2_transactions_detailed[columns].copy()
+                df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
+
             # Stacked transaction count chart
             fig_stacked_l2_txs = go.Figure()
-            columns = ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
             for column in columns:
-                fig_stacked_l2_txs.add_trace(go.Bar(x=df_l2_transactions['date'], y=df_l2_transactions[column], name=column))
+                if column != 'Ethereum':
+                    fig_stacked_l2_txs.add_trace(go.Bar(x=df_l2_transactions['date'], y=df_l2_transactions[column], name=column))
 
             fig_stacked_l2_txs.update_layout(
                 title='Ethereum L2 Transactions<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
@@ -394,7 +405,6 @@ class App:
 
             # Individual L2 Txs chart
             fig_detailed_l2_txs = go.Figure()
-            columns = ['Arbitrum', 'Base', 'Blast', 'Ethereum', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
             for column in columns:
                 fig_detailed_l2_txs.add_trace(go.Scatter(x=df_l2_transactions_detailed['date'], y=df_l2_transactions_detailed[column], name=column))
 
@@ -408,6 +418,39 @@ class App:
 
             csv_l2_transactions_detailed = df_l2_transactions_detailed[['date'] + columns].to_csv(index=False)
             st.download_button(label="CSV", data=csv_l2_transactions_detailed, file_name='ethereum_l2_transactions_detailed.csv', mime='text/csv')
+
+            # New chart: Normalized percentage stacked bar for L2 networks
+            columns_reordered = ['Ethereum'] + [col for col in columns if col != 'Ethereum']
+
+            fig_normalized_l2_txs = go.Figure()
+
+            # Add Ethereum first (at the bottom) and color it black
+            fig_normalized_l2_txs.add_trace(go.Bar(
+                x=df_l2_transactions_detailed['date'],
+                y=df_l2_normalized['Ethereum'],
+                name='Ethereum',
+                marker_color='black'
+            ))
+
+            # Add other networks
+            for column in columns_reordered[1:]:
+                fig_normalized_l2_txs.add_trace(go.Bar(
+                    x=df_l2_transactions_detailed['date'],
+                    y=df_l2_normalized[column],
+                    name=column
+                ))
+
+            fig_normalized_l2_txs.update_layout(
+                title='Normalized L2 Transaction Share<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
+                xaxis_title='Date',
+                yaxis_title='Percentage Share',
+                barmode='stack',
+                legend=dict(x=0, y=1, orientation='h')
+            )
+            st.plotly_chart(fig_normalized_l2_txs, use_container_width=True)
+
+            csv_l2_normalized = pd.concat([df_l2_transactions_detailed['date'], df_l2_normalized[columns_reordered]], axis=1).to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_normalized, file_name='ethereum_l2_normalized_transaction_share.csv', mime='text/csv')
 
             # Summed L2 Txs and share of Ethereum L1 chart
             df_l2_combined_txs_and_percentage = df_l2_transactions_detailed.copy()
