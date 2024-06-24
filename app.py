@@ -73,9 +73,9 @@ class App:
             df_exit_wait = self.data_instance.fetchExitWait()
             df_validators_churn = self.data_instance.fetchValidatorsAndChurn()
             df_apr = self.data_instance.fetchAPR()
-            df2 = self.data_instance.fetchStakedAmount()
-            df3 = self.data_instance.fetchEntryQueue()
-            df4 = self.data_instance.fetchExitQueue()
+            df_staked_amount = self.data_instance.fetchStakedAmount()
+            df_entry_queue = self.data_instance.fetchEntryQueue()
+            df_exit_queue = self.data_instance.fetchExitQueue()
             df_staking_apy = self.data_instance.fetchStakingAPY()
 
         if (
@@ -87,12 +87,12 @@ class App:
             and not df_validators_churn.empty
             and df_apr is not None
             and not df_apr.empty
-            and df2 is not None
-            and not df2.empty
-            and df3 is not None
-            and not df3.empty
-            and df4 is not None
-            and not df4.empty
+            and df_staked_amount is not None
+            and not df_staked_amount.empty
+            and df_entry_queue is not None
+            and not df_entry_queue.empty
+            and df_exit_queue is not None
+            and not df_exit_queue.empty
         ):
             # Create a placeholder for the success message
             success_message = st.empty()
@@ -108,7 +108,7 @@ class App:
                 latest_apr = df_apr['apr'].iloc[-1]
                 st.markdown(f"<div style='text-align: center;'><div style='font-size: 48px; font-weight: bold;'>{latest_apr:.2f}%</div><div style='font-size: 24px;'>Staking APR</div></div>", unsafe_allow_html=True)
             with col2:
-                latest_staked_amount = df2['staked_amount'].iloc[-1] / 1_000_000
+                latest_staked_amount = df_staked_amount['staked_amount'].iloc[-1] / 1_000_000
                 st.markdown(f"<div style='text-align: center;'><div style='font-size: 48px; font-weight: bold;'>{latest_staked_amount:,.2f}M</div><div style='font-size: 24px;'>Staked ETH</div></div>", unsafe_allow_html=True)
 
             # Period selection bar
@@ -123,17 +123,17 @@ class App:
                 mask_exit_wait = (df_exit_wait['Date'] >= min_date) & (df_exit_wait['Date'] <= max_date)
                 mask_validators_churn = (df_validators_churn['Date'] >= min_date) & (df_validators_churn['Date'] <= max_date)
                 mask_apr = (df_apr['Date'] >= min_date) & (df_apr['Date'] <= max_date)
-                mask2 = (df2['Date'] >= min_date) & (df2['Date'] <= max_date)
-                mask3 = (df3['Date'] >= min_date) & (df3['Date'] <= max_date)
-                mask4 = (df4['Date'] >= min_date) & (df4['Date'] <= max_date)
+                mask2 = (df_staked_amount['Date'] >= min_date) & (df_staked_amount['Date'] <= max_date)
+                mask3 = (df_entry_queue['Date'] >= min_date) & (df_entry_queue['Date'] <= max_date)
+                mask4 = (df_exit_queue['Date'] >= min_date) & (df_exit_queue['Date'] <= max_date)
                 mask_staking_apy = (df_staking_apy['Date'] >= min_date) & (df_staking_apy['Date'] <= max_date)
                 df_entry_wait = df_entry_wait.loc[mask_entry_wait]
                 df_exit_wait = df_exit_wait.loc[mask_exit_wait]
                 df_validators_churn = df_validators_churn.loc[mask_validators_churn]
                 df_apr = df_apr.loc[mask_apr]
-                df2 = df2.loc[mask2]
-                df3 = df3.loc[mask3]
-                df4 = df4.loc[mask4]
+                df_staked_amount = df_staked_amount.loc[mask2]
+                df_entry_queue = df_entry_queue.loc[mask3]
+                df_exit_queue = df_exit_queue.loc[mask4]
                 df_staking_apy = df_staking_apy.loc[mask_staking_apy]
 
             # Side by side entry/exit wait charts
@@ -267,47 +267,47 @@ class App:
             st.download_button(label="CSV", data=csv_validators_churn, file_name='validators_churn.csv', mime='text/csv')
 
             # Staked ETH amount and % of total ETH staked
-            fig2 = go.Figure()
-            fig2.add_trace(go.Scatter(x=df2['Date'], y=df2['staked_amount'], mode='lines', name='Staked Amount'))
-            fig2.add_trace(go.Scatter(x=df2['Date'], y=df2['staked_percent'], mode='lines', name='Staked Percent', yaxis='y2'))
-            fig2.update_layout(
+            fig_staked_amount = go.Figure()
+            fig_staked_amount.add_trace(go.Scatter(x=df_staked_amount['Date'], y=df_staked_amount['staked_amount'], mode='lines', name='Staked Amount'))
+            fig_staked_amount.add_trace(go.Scatter(x=df_staked_amount['Date'], y=df_staked_amount['staked_percent'], mode='lines', name='Staked Percent', yaxis='y2'))
+            fig_staked_amount.update_layout(
                 title='Staked Amount and Percentage<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Staked Amount',
                 yaxis2=dict(title='Staked Percent', side='right', overlaying='y'),
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig_staked_amount, use_container_width=True)
 
-            csv_staked_amount = df2.to_csv(index=False)
+            csv_staked_amount = df_staked_amount.to_csv(index=False)
             st.download_button(label="CSV", data=csv_staked_amount, file_name='staked_amount.csv', mime='text/csv')
 
             # Entry queue chart
-            fig3 = go.Figure()
-            fig3.add_trace(go.Scatter(x=df3['Date'], y=df3['entry_queue'], mode='lines', name='Entry Queue'))
-            fig3.update_layout(
+            fig_entry_queue = go.Figure()
+            fig_entry_queue.add_trace(go.Scatter(x=df_entry_queue['Date'], y=df_entry_queue['entry_queue'], mode='lines', name='Entry Queue'))
+            fig_entry_queue.update_layout(
                 title='Entry Queue<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Entry Queue',
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig_entry_queue, use_container_width=True)
 
-            csv_entry_queue = df3.to_csv(index=False)
+            csv_entry_queue = df_entry_queue.to_csv(index=False)
             st.download_button(label="CSV", data=csv_entry_queue, file_name='entry_queue.csv', mime='text/csv')
 
             # Exit queue chart
-            fig4 = go.Figure()
-            fig4.add_trace(go.Scatter(x=df4['Date'], y=df4['exit_queue'], mode='lines', name='Exit Queue'))
-            fig4.update_layout(
+            fig_exit_queue = go.Figure()
+            fig_exit_queue.add_trace(go.Scatter(x=df_exit_queue['Date'], y=df_exit_queue['exit_queue'], mode='lines', name='Exit Queue'))
+            fig_exit_queue.update_layout(
                 title='Exit Queue<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
                 xaxis_title='Date',
                 yaxis_title='Exit Queue',
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig4, use_container_width=True)
+            st.plotly_chart(fig_exit_queue, use_container_width=True)
 
-            csv_exit_queue = df4.to_csv(index=False)
+            csv_exit_queue = df_exit_queue.to_csv(index=False)
             st.download_button(label="CSV", data=csv_exit_queue, file_name='exit_queue.csv', mime='text/csv')
 
         else:
@@ -321,61 +321,65 @@ class App:
         selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=1, label_visibility='collapsed')
 
         with st.spinner('Fetching data...'):
-            df_l2_1, df_l2_2, df_l2_3 = self.data_instance.fetchEthereumL2Data()
+            df_l2_transactions, df_l2_daa_unfiltered, df_l2_transactions_detailed = self.data_instance.fetchEthereumL2Data()
 
-        if df_l2_1 is not None and not df_l2_1.empty and df_l2_2 is not None and not df_l2_2.empty and df_l2_3 is not None and not df_l2_3.empty:
+        if df_l2_transactions is not None and not df_l2_transactions.empty and df_l2_daa_unfiltered is not None and not df_l2_daa_unfiltered.empty and df_l2_transactions_detailed is not None and not df_l2_transactions_detailed.empty:
             st.success("Data successfully fetched.")
 
             # Filter data based on selected time period
             if time_periods[selected_period] is not None:
-                max_date = df_l2_1['date'].max()
+                max_date = df_l2_transactions['date'].max()
                 min_date = max_date - pd.Timedelta(days=time_periods[selected_period] - 1)
-                mask_l2_1 = (df_l2_1['date'] >= min_date) & (df_l2_1['date'] <= max_date)
-                mask_l2_2 = (df_l2_2['date'] >= min_date) & (df_l2_2['date'] <= max_date)
-                mask_l2_3 = (df_l2_3['date'] >= min_date) & (df_l2_3['date'] <= max_date)
-                df_l2_1 = df_l2_1.loc[mask_l2_1]
-                df_l2_2 = df_l2_2.loc[mask_l2_2]
-                df_l2_3 = df_l2_3.loc[mask_l2_3]
+                mask_l2_transactions = (df_l2_transactions['date'] >= min_date) & (df_l2_transactions['date'] <= max_date)
+                mask_l2_daa_unfiltered = (df_l2_daa_unfiltered['date'] >= min_date) & (df_l2_daa_unfiltered['date'] <= max_date)
+                mask_l2_transactions_detailed = (df_l2_transactions_detailed['date'] >= min_date) & (df_l2_transactions_detailed['date'] <= max_date)
+                df_l2_transactions = df_l2_transactions.loc[mask_l2_transactions]
+                df_l2_daa_unfiltered = df_l2_daa_unfiltered.loc[mask_l2_daa_unfiltered]
+                df_l2_transactions_detailed = df_l2_transactions_detailed.loc[mask_l2_transactions_detailed]
 
-            fig_l2_1 = go.Figure()
+            # Stacked transaction count chart
+            fig_stacked_l2_txs = go.Figure()
             columns = ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
             for column in columns:
-                fig_l2_1.add_trace(go.Bar(x=df_l2_1['date'], y=df_l2_1[column], name=column))
+                fig_stacked_l2_txs.add_trace(go.Bar(x=df_l2_transactions['date'], y=df_l2_transactions[column], name=column))
 
-            fig_l2_1.update_layout(
+            fig_stacked_l2_txs.update_layout(
                 title='Ethereum L2 Transactions<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Transaction Count',
                 barmode='stack'
             )
-            st.plotly_chart(fig_l2_1, use_container_width=True)
+            st.plotly_chart(fig_stacked_l2_txs, use_container_width=True)
 
-            csv_l2_1 = df_l2_1[['date'] + columns].to_csv(index=False)
-            st.download_button(label="CSV", data=csv_l2_1, file_name='ethereum_l2_transactions.csv', mime='text/csv')
+            csv_l2_transactions = df_l2_transactions[['date'] + columns].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_transactions, file_name='ethereum_l2_transactions.csv', mime='text/csv')
 
-            fig_l2_2 = go.Figure()
+            # Stacked active addresses chart (no filter)
+            fig_unfilterd_l2_daa = go.Figure()
             for column in ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'Optimism', 'Polygon zkEVM', 'Scroll', 'ZkSync', 'Zora']:
-                fig_l2_2.add_trace(go.Bar(x=df_l2_2['date'], y=df_l2_2[column], name=column))
+                fig_unfilterd_l2_daa.add_trace(go.Bar(x=df_l2_daa_unfiltered['date'], y=df_l2_daa_unfiltered[column], name=column))
 
-            fig_l2_2.update_layout(
+            fig_unfilterd_l2_daa.update_layout(
                 title='Ethereum L2 Daily Active Addresses (Unfiltered)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Daily Active Addresses',
                 barmode='stack'
             )
-            st.plotly_chart(fig_l2_2, use_container_width=True)
+            st.plotly_chart(fig_unfilterd_l2_daa, use_container_width=True)
             
-            csv_l2_2 = df_l2_2.to_csv(index=False)
-            st.download_button(label="CSV", data=csv_l2_2, file_name='ethereum_l2_daa_unfiltered.csv', mime='text/csv')
+            csv_l2_daa_unfiltered = df_l2_daa_unfiltered.to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_daa_unfiltered, file_name='ethereum_l2_daa_unfiltered.csv', mime='text/csv')
 
-            fig_l2_3 = go.Figure()
-            fig_l2_3.add_trace(go.Bar(x=df_l2_2['date'], y=df_l2_2['Single L2 DAA'], name='Single L2s DAAs'))
-            fig_l2_3.add_trace(go.Bar(x=df_l2_2['date'], y=df_l2_2['Multi-L2 DAAs'], name='Multi L2 DAAs'))
+            # Stacked active addresses chart (filtered) + multi-address share
+            df_l2_daa_filtered = df_l2_daa_unfiltered.copy()
+            fig_filterd_l2_daa = go.Figure()
+            fig_filterd_l2_daa.add_trace(go.Bar(x=df_l2_daa_filtered['date'], y=df_l2_daa_filtered['Single L2 DAA'], name='Single L2s DAAs'))
+            fig_filterd_l2_daa.add_trace(go.Bar(x=df_l2_daa_filtered['date'], y=df_l2_daa_filtered['Multi-L2 DAAs'], name='Multi L2 DAAs'))
 
-            df_l2_2['multi_share'] = df_l2_2['Multi-L2 DAAs'] / (df_l2_2['Multi-L2 DAAs'] + df_l2_2['Single L2 DAA'])
-            fig_l2_3.add_trace(go.Scatter(x=df_l2_2['date'], y=df_l2_2['multi_share'], name='Multi Share', yaxis='y2', line=dict(color='purple', width=2)))
+            df_l2_daa_filtered['multi_share'] = df_l2_daa_filtered['Multi-L2 DAAs'] / (df_l2_daa_filtered['Multi-L2 DAAs'] + df_l2_daa_filtered['Single L2 DAA'])
+            fig_filterd_l2_daa.add_trace(go.Scatter(x=df_l2_daa_filtered['date'], y=df_l2_daa_filtered['multi_share'], name='Multi Share', yaxis='y2', line=dict(color='purple', width=2)))
 
-            fig_l2_3.update_layout(
+            fig_filterd_l2_daa.update_layout(
                 title='Ethereum Single and Multi L2 DAAs<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis=dict(title='Address Count'),
@@ -383,44 +387,45 @@ class App:
                 barmode='stack',
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig_l2_3, use_container_width=True)
+            st.plotly_chart(fig_filterd_l2_daa, use_container_width=True)
             
-            csv_l2_3 = df_l2_2[['date', 'Single L2 DAA', 'Multi-L2 DAAs', 'multi_share']].to_csv(index=False)
-            st.download_button(label="CSV", data=csv_l2_3, file_name='ethereum_single_multi_l2_daas.csv', mime='text/csv')
+            csv_l2_daa_filtered = df_l2_daa_filtered[['date', 'Single L2 DAA', 'Multi-L2 DAAs', 'multi_share']].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_daa_filtered, file_name='ethereum_single_multi_l2_daas.csv', mime='text/csv')
 
-            # New chart for df_l2_3 (line chart)
-            fig_l2_4 = go.Figure()
-            columns = ['Arbitrum', 'Base', 'Blast', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
+            # Individual L2 Txs chart
+            fig_detailed_l2_txs = go.Figure()
+            columns = ['Arbitrum', 'Base', 'Blast', 'Ethereum', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
             for column in columns:
-                fig_l2_4.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3[column], name=column))
+                fig_detailed_l2_txs.add_trace(go.Scatter(x=df_l2_transactions_detailed['date'], y=df_l2_transactions_detailed[column], name=column))
 
-            fig_l2_4.update_layout(
+            fig_detailed_l2_txs.update_layout(
                 title='Ethereum L2 Transactions (Detailed)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Transaction Count',
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig_l2_4, use_container_width=True)
+            st.plotly_chart(fig_detailed_l2_txs, use_container_width=True)
 
-            csv_l2_4 = df_l2_3[['date'] + columns].to_csv(index=False)
-            st.download_button(label="CSV", data=csv_l2_4, file_name='ethereum_l2_transactions_detailed.csv', mime='text/csv')
+            csv_l2_transactions_detailed = df_l2_transactions_detailed[['date'] + columns].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_transactions_detailed, file_name='ethereum_l2_transactions_detailed.csv', mime='text/csv')
 
-            # New chart for df_l2_3 (combined chart)
-            fig_l2_5 = go.Figure()
-            fig_l2_5.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3['Combined L2 TXs'], name='Combined L2 TXs', yaxis='y'))
-            fig_l2_5.add_trace(go.Scatter(x=df_l2_3['date'], y=df_l2_3['L2 % of Ethereum'], name='L2 % of Ethereum', yaxis='y2'))
+            # Summed L2 Txs and share of Ethereum L1 chart
+            df_l2_combined_txs_and_percentage = df_l2_transactions_detailed.copy()
+            fig_summed_l2_txs = go.Figure()
+            fig_summed_l2_txs.add_trace(go.Scatter(x=df_l2_combined_txs_and_percentage['date'], y=df_l2_combined_txs_and_percentage['Combined L2 TXs'], name='Combined L2 TXs', yaxis='y'))
+            fig_summed_l2_txs.add_trace(go.Scatter(x=df_l2_combined_txs_and_percentage['date'], y=df_l2_combined_txs_and_percentage['L2 % of Ethereum'], name='L2 % of Ethereum', yaxis='y2'))
 
-            fig_l2_5.update_layout(
+            fig_summed_l2_txs.update_layout(
                 title='Combined L2 Transactions and L2 % of Ethereum<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis=dict(title='Combined L2 TXs'),
                 yaxis2=dict(title='L2 % of Ethereum', overlaying='y', side='right'),
                 legend=dict(x=0, y=1, orientation='h')
             )
-            st.plotly_chart(fig_l2_5, use_container_width=True)
+            st.plotly_chart(fig_summed_l2_txs, use_container_width=True)
             
-            csv_l2_5 = df_l2_3[['date', 'Combined L2 TXs', 'L2 % of Ethereum']].to_csv(index=False)
-            st.download_button(label="CSV", data=csv_l2_5, file_name='combined_l2_transactions_percentage.csv', mime='text/csv')
+            csv_l2_combined_txs_and_percentage = df_l2_combined_txs_and_percentage[['date', 'Combined L2 TXs', 'L2 % of Ethereum']].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_l2_combined_txs_and_percentage, file_name='combined_l2_transactions_percentage.csv', mime='text/csv')
 
         else:
             st.warning("Data fetching was incomplete. Please try running the app again.")
