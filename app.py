@@ -14,58 +14,36 @@ class App:
         #st.set_page_config(layout="wide")
         st.title("Galaxy Research Dashboard")
 
-        # Create a horizontal navigation bar
-        selected_tab = st.radio(
-            "Select a Tab",
-            ("Home", "Ethereum Validators", "Ethereum L2"),
-            key="navigation",
-            label_visibility="collapsed",
-            horizontal=True,
-        )
-
         # Add icons or emojis to the navigation options
         tab_icons = {
             "Home": "🏠",
             "Ethereum Validators": "🔒",
             "Ethereum L2": "⚡",
+            "BTC/ETH Futures": "📈",
+            "Prices": "🚀",
         }
 
-        # Customize the navigation bar style
-        st.markdown(
-            """
-            <style>
-            .streamlit-expanderHeader {
-                font-size: 18px;
-                font-weight: bold;
-            }
-            .streamlit-expanderHeader:hover {
-                color: #ff4b4b;
-            }
-            .streamlit-expander {
-                border-radius: 10px;
-                border: 2px solid #ff4b4b;
-                padding: 10px;
-                margin-bottom: 10px;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Create tabs with icons
+        tabs = st.tabs([f"{tab_icons[tab]} {tab}" for tab in tab_icons.keys()])
 
-        # Display the selected tab content
-        if selected_tab == "Home":
+        # Display the content for each tab
+        with tabs[0]:
             self.tabHome()
-        elif selected_tab == "Ethereum Validators":
+        with tabs[1]:
             self.tabEthereumValidators()
-        elif selected_tab == "Ethereum L2":
+        with tabs[2]:
             self.tabEthereumL2()
+        with tabs[3]:
+            self.tabBTCETHFutures()
+        with tabs[4]:
+            self.tabPrices()
 
     def tabHome(self):
         st.header("Featured Charts")
 
 # Validators Tab ---------------------------------------------------------------------------------
     def tabEthereumValidators(self):
-        st.header("Validator Queue Data")
+        st.header("Ethreeum Validators Queue Data")
 
         # Fetch data
         with st.spinner('Fetching data...'):
@@ -113,7 +91,7 @@ class App:
 
             # Period selection bar
             time_periods = {'7d': 7, '30d': 30, '90d': 90, '180d': 180, '365d': 365, 'All': None}
-            selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=2, label_visibility='collapsed')
+            selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=4, label_visibility='collapsed')
 
             # Filter data based on selected time period
             if time_periods[selected_period] is not None:
@@ -318,7 +296,7 @@ class App:
         st.header("Ethereum L2 Data")
 
         time_periods = {'7d': 7, '30d': 30, '90d': 90, '180d': 180, '365d': 365, 'All': None}
-        selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=4, label_visibility='collapsed')
+        selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=4, label_visibility='collapsed', key='l2_time_period')
 
         with st.spinner('Fetching data...'):
             df_l2_transactions, df_l2_daa_unfiltered, df_l2_transactions_detailed = self.data_instance.fetchEthereumL2Data()
@@ -491,7 +469,7 @@ class App:
                 x=df_l2_transactions_detailed['date'],
                 y=df_l2_vs_ethereum['All L2 TXs'],
                 name='All L2 TXs',
-                marker_color='rgb(49,130,189)'  # You can change this color if desired
+                marker_color='rgb(49,130,189)'
             ))
 
             fig_l2_vs_ethereum.update_layout(
@@ -508,6 +486,16 @@ class App:
 
         else:
             st.warning("Data fetching was incomplete. Please try running the app again.")
+
+# Futures Tab ---------------------------------------------------------------------------------
+    def tabBTCETHFutures(self):
+        st.header("BTC/ETH Futures")
+        st.subheader("Coming Soon!")
+
+# Prices Tab ---------------------------------------------------------------------------------
+    def tabPrices(self):
+        st.header("Prices")
+        st.subheader("Coming Soon!")
 
 # Run app
 App()
