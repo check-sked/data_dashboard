@@ -17,7 +17,7 @@ class App:
         # Add icons or emojis to the navigation options
         tab_icons = {
             "Home": "🏠",
-            "Ethereum Validators": "🔒",
+            "Ethereum Staking": "🔒",
             "Ethereum L2": "⚡",
             "BTC/ETH Futures": "📈",
             "Prices": "🚀",
@@ -43,7 +43,7 @@ class App:
 
 # Validators Tab ---------------------------------------------------------------------------------
     def tabEthereumValidators(self):
-        st.header("Ethreeum Validators Queue Data")
+        st.header("Ethreeum Staking")
 
         # Define the start date for filtering of staking apy and validator revenue
         start_date = pd.to_datetime('2022-09-15')
