@@ -11,6 +11,7 @@ class Data:
         aws_bucket_name = st.secrets["aws_bucket_name"]
         aws_validator_file_name = st.secrets["aws_validator_file_name"]
         aws_staking_rate_file_name = st.secrets["aws_staking_rate_file_name"]
+        aws_eth_supply_file_name = st.secrets["aws_eth_supply_file_name"]
         region_name = st.secrets["region_name"]
         
         self.s3 = boto3.client('s3',
@@ -20,6 +21,7 @@ class Data:
         self.bucket_name = aws_bucket_name
         self.file_name = aws_validator_file_name
         self.aws_staking_rate_file_name = aws_staking_rate_file_name
+        self.aws_eth_supply_file_name = aws_eth_supply_file_name
         
         self.scaling = [0, 327680, 393216, 458752, 524288, 589824, 655360, 720896, 786432, 851968, 917504, 983040, 1048576, 1114112, 1179648, 1245184, 1310720, 1376256, 1441792, 1507328, 1572864, 1638400, 1703936, 1769472, 1835008, 1900544, 1966080, 2031616, 2097152, 2162688, 2228224, 2293760, 2359296, 2424832, 2490368, 2555904, 2621440, 2686976, 2752512]
         self.epoch_churn = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
@@ -156,6 +158,19 @@ class Data:
             return df
         except Exception as e:
             st.error(f"General Error: {e}")
+            return None
+        
+    def fetchEthSupplyData(self):
+        try:
+            response = self.s3.get_object(Bucket=self.bucket_name, Key=self.aws_eth_supply_file_name)
+            json_data = response['Body'].read().decode('utf-8')
+            data = json.loads(json_data)
+            df = pd.DataFrame(data)
+            df['Time'] = pd.to_datetime(df['Time'])  # Change 'Date' to 'Time'
+            df = df.sort_values('Time')  # Change 'Date' to 'Time'
+            return df
+        except Exception as e:
+            st.error(f"Error retrieving ETH supply data from S3: {e}")
             return None
 
     def fetchEthereumL2Data(self):

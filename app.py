@@ -45,6 +45,9 @@ class App:
     def tabEthereumValidators(self):
         st.header("Ethreeum Validators Queue Data")
 
+        # Define the start date for filtering of staking apy and validator revenue
+        start_date = pd.to_datetime('2022-09-15')
+
         # Fetch data
         with st.spinner('Fetching data...'):
             df_entry_wait = self.data_instance.fetchEntryWait()
@@ -52,9 +55,13 @@ class App:
             df_validators_churn = self.data_instance.fetchValidatorsAndChurn()
             df_apr = self.data_instance.fetchAPR()
             df_staked_amount = self.data_instance.fetchStakedAmount()
+            df_eth_supply = self.data_instance.fetchEthSupplyData()
             df_entry_queue = self.data_instance.fetchEntryQueue()
             df_exit_queue = self.data_instance.fetchExitQueue()
             df_staking_apy = self.data_instance.fetchStakingAPY()
+
+        # Add this conversion
+        df_eth_supply['Time'] = pd.to_datetime(df_eth_supply['Time']).dt.tz_localize(None)
 
         if (
             df_entry_wait is not None
@@ -68,6 +75,8 @@ class App:
             and df_staked_amount is not None
             and not df_staked_amount.empty
             and df_entry_queue is not None
+            and df_eth_supply is not None
+            and not df_eth_supply.empty
             and not df_entry_queue.empty
             and df_exit_queue is not None
             and not df_exit_queue.empty
@@ -79,6 +88,9 @@ class App:
             # Wait for 1 seconds and then clear the success message
             time.sleep(1)
             success_message.empty()
+
+            # Filter data to start from September 15, 2022
+            df_staking_apy = df_staking_apy[df_staking_apy['Date'] >= start_date]
 
             # Display APR and staked ETH amount in big bold numbers
             col1, col2 = st.columns(2)
@@ -95,7 +107,7 @@ class App:
 
             # Filter data based on selected time period
             if time_periods[selected_period] is not None:
-                max_date = df_entry_wait['Date'].max()
+                max_date = pd.to_datetime(df_entry_wait['Date'].max()).tz_localize(None)
                 min_date = max_date - pd.Timedelta(days=time_periods[selected_period] - 1)
                 mask_entry_wait = (df_entry_wait['Date'] >= min_date) & (df_entry_wait['Date'] <= max_date)
                 mask_exit_wait = (df_exit_wait['Date'] >= min_date) & (df_exit_wait['Date'] <= max_date)
@@ -105,6 +117,8 @@ class App:
                 mask3 = (df_entry_queue['Date'] >= min_date) & (df_entry_queue['Date'] <= max_date)
                 mask4 = (df_exit_queue['Date'] >= min_date) & (df_exit_queue['Date'] <= max_date)
                 mask_staking_apy = (df_staking_apy['Date'] >= min_date) & (df_staking_apy['Date'] <= max_date)
+                mask_eth_supply = (df_eth_supply['Time'] >= min_date) & (df_eth_supply['Time'] <= max_date)
+                
                 df_entry_wait = df_entry_wait.loc[mask_entry_wait]
                 df_exit_wait = df_exit_wait.loc[mask_exit_wait]
                 df_validators_churn = df_validators_churn.loc[mask_validators_churn]
@@ -113,6 +127,10 @@ class App:
                 df_entry_queue = df_entry_queue.loc[mask3]
                 df_exit_queue = df_exit_queue.loc[mask4]
                 df_staking_apy = df_staking_apy.loc[mask_staking_apy]
+                df_eth_supply = df_eth_supply.loc[mask_eth_supply]
+            # If 'All' is selected, we don't need to filter the data
+            else:
+                pass  # Use all data without filtering
 
             # Side by side entry/exit wait charts
             col1, col2 = st.columns(2)
@@ -244,21 +262,54 @@ class App:
             csv_validators_churn = df_validators_churn_merged.to_csv(index=False)
             st.download_button(label="CSV", data=csv_validators_churn, file_name='validators_churn.csv', mime='text/csv')
 
-            # Staked ETH amount and % of total ETH staked
+            # ETH Staked Amount and Share Staked
             fig_staked_amount = go.Figure()
-            fig_staked_amount.add_trace(go.Scatter(x=df_staked_amount['Date'], y=df_staked_amount['staked_amount'], mode='lines', name='Staked Amount'))
-            fig_staked_amount.add_trace(go.Scatter(x=df_staked_amount['Date'], y=df_staked_amount['staked_percent'], mode='lines', name='Staked Percent', yaxis='y2'))
+
+            # Calculate totalETH and stakedShare
+            df_eth_supply['totalETH'] = df_eth_supply['ETH'] + df_eth_supply['stakedETH']
+            df_eth_supply['stakedShare'] = df_eth_supply['stakedETH'] / df_eth_supply['totalETH']
+
+            fig_staked_amount.add_trace(go.Scatter(x=df_eth_supply['Time'], y=df_eth_supply['stakedETH'], mode='lines', name='ETH Staked'))
+            fig_staked_amount.add_trace(go.Scatter(x=df_eth_supply['Time'], y=df_eth_supply['stakedShare'], mode='lines', name='Share Staked', yaxis='y2'))
+
             fig_staked_amount.update_layout(
-                title='Staked Amount and Percentage<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, beaconcha.in</span>',
+                title='ETH Staked and Share Staked<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Dune</span>',
                 xaxis_title='Date',
-                yaxis_title='Staked Amount',
-                yaxis2=dict(title='Staked Percent', side='right', overlaying='y'),
+                yaxis_title='ETH Staked',
+                yaxis2=dict(title='Share Staked', side='right', overlaying='y', tickformat='.2%'),
                 legend=dict(x=0, y=1, orientation='h')
             )
+
             st.plotly_chart(fig_staked_amount, use_container_width=True)
 
-            csv_staked_amount = df_staked_amount.to_csv(index=False)
-            st.download_button(label="CSV", data=csv_staked_amount, file_name='staked_amount.csv', mime='text/csv')
+            # Prepare CSV data
+            csv_staked_amount = df_eth_supply[['Time', 'stakedETH', 'stakedShare']].rename(columns={'Time': 'Date', 'stakedETH': 'ETH Staked', 'stakedShare': 'Share Staked'}).to_csv(index=False)
+            st.download_button(label="CSV", data=csv_staked_amount, file_name='eth_staked_and_share.csv', mime='text/csv')
+
+            # ETH Supply Composition chart
+            fig_eth_supply = go.Figure()
+
+            # Add traces in the desired order (from bottom to top)
+            fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['stakedETH'], name='Staked ETH'))
+            fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['ETH'], name='ETH'))
+            fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['burntETH'], name='Burnt ETH'))
+
+            fig_eth_supply.update_layout(
+                title='ETH Supply Composition<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Dune</span>',
+                xaxis_title='Date',
+                yaxis_title='ETH',
+                barmode='stack',
+                legend=dict(x=0, y=1, orientation='h')
+            )
+
+            st.plotly_chart(fig_eth_supply, use_container_width=True)
+
+            # Calculate totalETH
+            df_eth_supply['totalETH'] = df_eth_supply['ETH'] + df_eth_supply['stakedETH']
+
+            # Include totalETH in the CSV export
+            csv_eth_supply = df_eth_supply[['Time', 'ETH', 'stakedETH', 'burntETH', 'totalETH']].to_csv(index=False)
+            st.download_button(label="CSV", data=csv_eth_supply, file_name='eth_supply_composition.csv', mime='text/csv')
 
             # Entry queue chart
             fig_entry_queue = go.Figure()
