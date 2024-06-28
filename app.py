@@ -43,7 +43,7 @@ class App:
 
 # Validators Tab ---------------------------------------------------------------------------------
     def tabEthereumValidators(self):
-        st.header("Ethreeum Staking")
+        st.header("Ethereum Staking")
 
         # Define the start date for filtering of staking apy and validator revenue
         start_date = pd.to_datetime('2022-09-15')
