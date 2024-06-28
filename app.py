@@ -11,10 +11,8 @@ class App:
         self.appSetup()
 
     def appSetup(self):
-        #st.set_page_config(layout="wide")
         st.title("Galaxy Research Dashboard")
 
-        # Add icons or emojis to the navigation options
         tab_icons = {
             "Home": "🏠",
             "Ethereum Staking": "🔒",
@@ -23,10 +21,8 @@ class App:
             "Prices": "🚀",
         }
 
-        # Create tabs with icons
         tabs = st.tabs([f"{tab_icons[tab]} {tab}" for tab in tab_icons.keys()])
 
-        # Display the content for each tab
         with tabs[0]:
             self.tabHome()
         with tabs[1]:
@@ -45,10 +41,8 @@ class App:
     def tabEthereumValidators(self):
         st.header("Ethereum Staking")
 
-        # Define the start date for filtering of staking apy and validator revenue
         start_date = pd.to_datetime('2022-09-15')
 
-        # Fetch data
         with st.spinner('Fetching data...'):
             df_entry_wait = self.data_instance.fetchEntryWait()
             df_exit_wait = self.data_instance.fetchExitWait()
@@ -60,7 +54,6 @@ class App:
             df_exit_queue = self.data_instance.fetchExitQueue()
             df_staking_apy = self.data_instance.fetchStakingAPY()
 
-        # Add this conversion
         df_eth_supply['Time'] = pd.to_datetime(df_eth_supply['Time']).dt.tz_localize(None)
 
         if (
@@ -81,18 +74,16 @@ class App:
             and df_exit_queue is not None
             and not df_exit_queue.empty
         ):
-            # Create a placeholder for the success message
             success_message = st.empty()
             success_message.success("Data successfully fetched.")
 
-            # Wait for 1 seconds and then clear the success message
+            # Wait
             time.sleep(1)
             success_message.empty()
 
-            # Filter data to start from September 15, 2022
+            # Start date for APY
             df_staking_apy = df_staking_apy[df_staking_apy['Date'] >= start_date]
 
-            # Display APR and staked ETH amount in big bold numbers
             col1, col2 = st.columns(2)
             with col1:
                 latest_apr = df_apr['apr'].iloc[-1]
@@ -105,7 +96,7 @@ class App:
             time_periods = {'7d': 7, '30d': 30, '90d': 90, '180d': 180, '365d': 365, 'All': None}
             selected_period = st.selectbox("Select Time Period", list(time_periods.keys()), index=4, label_visibility='collapsed')
 
-            # Filter data based on selected time period
+            # Time filter
             if time_periods[selected_period] is not None:
                 max_date = pd.to_datetime(df_entry_wait['Date'].max()).tz_localize(None)
                 min_date = max_date - pd.Timedelta(days=time_periods[selected_period] - 1)
@@ -128,11 +119,9 @@ class App:
                 df_exit_queue = df_exit_queue.loc[mask4]
                 df_staking_apy = df_staking_apy.loc[mask_staking_apy]
                 df_eth_supply = df_eth_supply.loc[mask_eth_supply]
-            # If 'All' is selected, we don't need to filter the data
             else:
-                pass  # Use all data without filtering
+                pass
 
-            # Side by side entry/exit wait charts
             col1, col2 = st.columns(2)
             with col1:
                 fig_entry_wait = go.Figure()
@@ -218,19 +207,14 @@ class App:
                 )
             )
 
-            # Create a copy of the DataFrame for the second churn line
             df_validators_churn_hardcoded = df_validators_churn.copy()
 
-            # Find the index of March 13, 2024
             hardcoded_date = '2024-03-13'
             hardcoded_date_timestamp = pd.to_datetime(hardcoded_date)
 
-            # Check if the hardcoded date is within the date range of the DataFrame
             if hardcoded_date_timestamp >= df_validators_churn_hardcoded['Date'].min():
-                # Set the churn value to 8 from March 13, 2024 onwards
                 df_validators_churn_hardcoded.loc[df_validators_churn_hardcoded['Date'] >= hardcoded_date_timestamp, 'churn'] = 8
             else:
-                # Set the entire churn column to 8 if the hardcoded date is outside the date range
                 df_validators_churn_hardcoded['churn'] = 8
 
             fig_validators_churn.add_trace(
@@ -253,10 +237,9 @@ class App:
 
             st.plotly_chart(fig_validators_churn, use_container_width=True)
 
-            # Merge the original and hardcoded DataFrames
             df_validators_churn_merged = pd.merge(df_validators_churn, df_validators_churn_hardcoded[['Date', 'churn']], on='Date', suffixes=('_exit', '_entry'))
 
-            # Rename the churn columns
+            # Churn names
             df_validators_churn_merged.rename(columns={'churn_exit': 'Exit Churn', 'churn_entry': 'Entry Churn'}, inplace=True)
 
             csv_validators_churn = df_validators_churn_merged.to_csv(index=False)
@@ -282,14 +265,12 @@ class App:
 
             st.plotly_chart(fig_staked_amount, use_container_width=True)
 
-            # Prepare CSV data
             csv_staked_amount = df_eth_supply[['Time', 'stakedETH', 'stakedShare']].rename(columns={'Time': 'Date', 'stakedETH': 'ETH Staked', 'stakedShare': 'Share Staked'}).to_csv(index=False)
             st.download_button(label="CSV", data=csv_staked_amount, file_name='eth_staked_and_share.csv', mime='text/csv')
 
             # ETH Supply Composition chart
             fig_eth_supply = go.Figure()
 
-            # Add traces in the desired order (from bottom to top)
             fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['stakedETH'], name='Staked ETH'))
             fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['ETH'], name='ETH'))
             fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['burntETH'], name='Burnt ETH'))
@@ -304,10 +285,8 @@ class App:
 
             st.plotly_chart(fig_eth_supply, use_container_width=True)
 
-            # Calculate totalETH
             df_eth_supply['totalETH'] = df_eth_supply['ETH'] + df_eth_supply['stakedETH']
 
-            # Include totalETH in the CSV export
             csv_eth_supply = df_eth_supply[['Time', 'ETH', 'stakedETH', 'burntETH', 'totalETH']].to_csv(index=False)
             st.download_button(label="CSV", data=csv_eth_supply, file_name='eth_supply_composition.csv', mime='text/csv')
 
@@ -357,7 +336,6 @@ class App:
 
             columns = ['Arbitrum', 'Base', 'Blast', 'Ethereum', 'Linea', 'Mantle', 'Mode', 'OP Mainnet', 'Polygon zkEVM', 'Scroll', 'zkSync', 'Zora']
 
-            # Filter data based on selected time period
             if time_periods[selected_period] is not None:
                 max_date = df_l2_transactions['date'].max()
                 min_date = max_date - pd.Timedelta(days=time_periods[selected_period] - 1)
@@ -369,11 +347,9 @@ class App:
                 df_l2_daa_unfiltered = df_l2_daa_unfiltered.loc[mask_l2_daa_unfiltered]
                 df_l2_transactions_detailed = df_l2_transactions_detailed.loc[mask_l2_transactions_detailed]
 
-                # Create and filter df_l2_normalized here
                 df_l2_normalized = df_l2_transactions_detailed[columns].copy()
                 df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
             else:
-                # If no time period is selected, create df_l2_normalized from the full dataset
                 df_l2_normalized = df_l2_transactions_detailed[columns].copy()
                 df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
 
@@ -448,12 +424,11 @@ class App:
             csv_l2_transactions_detailed = df_l2_transactions_detailed[['date'] + columns].to_csv(index=False)
             st.download_button(label="CSV", data=csv_l2_transactions_detailed, file_name='ethereum_l2_transactions_detailed.csv', mime='text/csv')
 
-            # New chart: Normalized percentage stacked bar for L2 networks
+            # Normalized percentage stacked bar for L2 networks chart
             columns_reordered = ['Ethereum'] + [col for col in columns if col != 'Ethereum']
 
             fig_normalized_l2_txs = go.Figure()
 
-            # Add Ethereum first (at the bottom) and color it black
             fig_normalized_l2_txs.add_trace(go.Bar(
                 x=df_l2_transactions_detailed['date'],
                 y=df_l2_normalized['Ethereum'],
@@ -461,7 +436,6 @@ class App:
                 marker_color='black'
             ))
 
-            # Add other networks
             for column in columns_reordered[1:]:
                 fig_normalized_l2_txs.add_trace(go.Bar(
                     x=df_l2_transactions_detailed['date'],
@@ -507,7 +481,6 @@ class App:
 
             fig_l2_vs_ethereum = go.Figure()
 
-            # Add Ethereum first (at the bottom) and color it black
             fig_l2_vs_ethereum.add_trace(go.Bar(
                 x=df_l2_transactions_detailed['date'],
                 y=df_l2_vs_ethereum['Ethereum'],
@@ -515,7 +488,6 @@ class App:
                 marker_color='black'
             ))
 
-            # Add All L2 TXs
             fig_l2_vs_ethereum.add_trace(go.Bar(
                 x=df_l2_transactions_detailed['date'],
                 y=df_l2_vs_ethereum['All L2 TXs'],
