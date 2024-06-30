@@ -7,6 +7,7 @@ import urllib
 
 class App:
     def __init__(self):
+        # data.py
         self.data_instance = Data()
         self.appSetup()
 
