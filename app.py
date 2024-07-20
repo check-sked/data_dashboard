@@ -158,7 +158,7 @@ class App:
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly MEV APY'] * 100, name='MEV'))
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly TIPS APY'] * 100, name='Tips'))
             fig_staking_apy.update_layout(
-                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Flipside Crypto</span>',
+                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Flipside Crypto</span>',
                 xaxis_title='Date',
                 yaxis_title='APY (%)',
                 barmode='stack',
@@ -257,7 +257,7 @@ class App:
             fig_staked_amount.add_trace(go.Scatter(x=df_eth_supply['Time'], y=df_eth_supply['stakedShare'], mode='lines', name='Share Staked', yaxis='y2'))
 
             fig_staked_amount.update_layout(
-                title='ETH Staked and Share Staked<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Dune</span>',
+                title='ETH Staked and Share Staked<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='ETH Staked',
                 yaxis2=dict(title='Share Staked', side='right', overlaying='y', tickformat='.2%'),
@@ -277,7 +277,7 @@ class App:
             fig_eth_supply.add_trace(go.Bar(x=df_eth_supply['Time'], y=df_eth_supply['burntETH'], name='Burnt ETH'))
 
             fig_eth_supply.update_layout(
-                title='ETH Supply Composition<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Dune</span>',
+                title='ETH Supply Composition<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='ETH',
                 barmode='stack',
