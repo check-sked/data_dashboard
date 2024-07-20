@@ -158,7 +158,7 @@ class App:
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly MEV APY'] * 100, name='MEV'))
             fig_staking_apy.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['Yearly TIPS APY'] * 100, name='Tips'))
             fig_staking_apy.update_layout(
-                title='Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Flipside Crypto</span>',
+                title='Nominal Staking APY Breakdown<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Flipside Crypto, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='APY (%)',
                 barmode='stack',
@@ -175,7 +175,7 @@ class App:
             fig_validator_revenue.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['MEV'], name='MEV'))
             fig_validator_revenue.add_trace(go.Bar(x=df_staking_apy['Date'], y=df_staking_apy['TIPS'], name='Tips'))
             fig_validator_revenue.update_layout(
-                title='Validator Revenue by Source (ETH)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Coin Metrics, Flipside Crypto</span>',
+                title='Validator Revenue by Source (ETH)<br><span style="font-size: 12px; font-style: italic;">Source: Galaxy Research, Flipside Crypto, Dune</span>',
                 xaxis_title='Date',
                 yaxis_title='Revenue (ETH)',
                 barmode='stack',
