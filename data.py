@@ -6,22 +6,22 @@ import requests
 
 class Data:
     def __init__(self):
-        aws_access_key_id = st.secrets["aws_access_key_id"]
-        aws_secret_access_key = st.secrets["aws_secret_access_key"]
-        aws_bucket_name = st.secrets["aws_bucket_name"]
-        aws_validator_file_name = st.secrets["aws_validator_file_name"]
-        aws_staking_rate_file_name = st.secrets["aws_staking_rate_file_name"]
-        aws_eth_supply_file_name = st.secrets["aws_eth_supply_file_name"]
-        region_name = st.secrets["region_name"]
+        self.aws_access_key_id = st.secrets["aws_access_key_id"]
+        self.aws_secret_access_key = st.secrets["aws_secret_access_key"]
+        self.aws_bucket_name = st.secrets["aws_bucket_name"]
+        self.aws_validator_file_name = st.secrets["aws_validator_file_name"]
+        self.aws_staking_rate_file_name = st.secrets["aws_staking_rate_file_name"]
+        self.aws_eth_supply_file_name = st.secrets["aws_eth_supply_file_name"]
+        self.aws_l2_transactions_file_name = st.secrets["aws_l2_transactions_file_name"]
+        self.aws_l2_users_file_name = st.secrets["aws_l2_users_file_name"]
+        self.region_name = st.secrets["region_name"]
         
         self.s3 = boto3.client('s3',
-                            aws_access_key_id=aws_access_key_id,
-                            aws_secret_access_key=aws_secret_access_key,
-                            region_name=region_name)
-        self.bucket_name = aws_bucket_name
-        self.file_name = aws_validator_file_name
-        self.aws_staking_rate_file_name = aws_staking_rate_file_name
-        self.aws_eth_supply_file_name = aws_eth_supply_file_name
+                            aws_access_key_id=self.aws_access_key_id,
+                            aws_secret_access_key=self.aws_secret_access_key,
+                            region_name=self.region_name)
+        self.bucket_name = self.aws_bucket_name
+        self.file_name = self.aws_validator_file_name
         
         self.scaling = [0, 327680, 393216, 458752, 524288, 589824, 655360, 720896, 786432, 851968, 917504, 983040, 1048576, 1114112, 1179648, 1245184, 1310720, 1376256, 1441792, 1507328, 1572864, 1638400, 1703936, 1769472, 1835008, 1900544, 1966080, 2031616, 2097152, 2162688, 2228224, 2293760, 2359296, 2424832, 2490368, 2555904, 2621440, 2686976, 2752512]
         self.epoch_churn = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
@@ -166,8 +166,8 @@ class Data:
             json_data = response['Body'].read().decode('utf-8')
             data = json.loads(json_data)
             df = pd.DataFrame(data)
-            df['Time'] = pd.to_datetime(df['Time'])  # Change 'Date' to 'Time'
-            df = df.sort_values('Time')  # Change 'Date' to 'Time'
+            df['Time'] = pd.to_datetime(df['Time'])
+            df = df.sort_values('Time')
             return df
         except Exception as e:
             st.error(f"Error retrieving ETH supply data from S3: {e}")
@@ -175,33 +175,23 @@ class Data:
 
     def fetchEthereumL2Data(self):
         try:
-            dune_api_key = st.secrets["dune_api_key"]
+            response_transactions = self.s3.get_object(Bucket=self.bucket_name, Key=self.aws_l2_transactions_file_name)
+            json_data_transactions = response_transactions['Body'].read().decode('utf-8')
+            data_transactions = json.loads(json_data_transactions)
+            df_transactions = pd.DataFrame(data_transactions['result']['rows'])
+            df_transactions['date'] = pd.to_datetime(df_transactions['date'])
+            df_transactions = df_transactions.sort_values('date')
 
-            url1 = f"https://api.dune.com/api/v1/query/3802801/results?api_key={dune_api_key}"
-            response1 = requests.get(url1)
-            data1 = response1.json()
-            rows1 = data1['result']['rows']
-            df1 = pd.DataFrame(rows1)
-            df1['date'] = pd.to_datetime(df1['date'])
-            df1 = df1.sort_values('date')
+            response_users = self.s3.get_object(Bucket=self.bucket_name, Key=self.aws_l2_users_file_name)
+            json_data_users = response_users['Body'].read().decode('utf-8')
+            data_users = json.loads(json_data_users)
+            df_users = pd.DataFrame(data_users['result']['rows'])
+            df_users['date'] = pd.to_datetime(df_users['date'])
+            df_users = df_users.sort_values('date')
 
-            url2 = f"https://api.dune.com/api/v1/query/3635617/results?api_key={dune_api_key}"
-            response2 = requests.get(url2)
-            data2 = response2.json()
-            rows2 = data2['result']['rows']
-            df2 = pd.DataFrame(rows2)
-            df2['date'] = pd.to_datetime(df2['date'])
-            df2 = df2.sort_values('date')
+            df_transactions_detailed = df_transactions.copy()
 
-            url3 = f"https://api.dune.com/api/v1/query/3802801/results?api_key={dune_api_key}"
-            response3 = requests.get(url3)
-            data3 = response3.json()
-            rows3 = data3['result']['rows']
-            df3 = pd.DataFrame(rows3)
-            df3['date'] = pd.to_datetime(df3['date'])
-            df3 = df3.sort_values('date')
-
-            return df1, df2, df3
+            return df_transactions, df_users, df_transactions_detailed
         except Exception as e:
-            st.error(f"General Error: {e}")
+            st.error(f"Error retrieving Ethereum L2 data from S3: {e}")
             return None, None, None

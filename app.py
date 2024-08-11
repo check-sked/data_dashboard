@@ -348,13 +348,10 @@ class App:
                 df_l2_daa_unfiltered = df_l2_daa_unfiltered.loc[mask_l2_daa_unfiltered]
                 df_l2_transactions_detailed = df_l2_transactions_detailed.loc[mask_l2_transactions_detailed]
 
-                df_l2_normalized = df_l2_transactions_detailed[columns].copy()
-                df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
-            else:
-                df_l2_normalized = df_l2_transactions_detailed[columns].copy()
-                df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
+            df_l2_normalized = df_l2_transactions_detailed[columns].copy()
+            df_l2_normalized = df_l2_normalized.div(df_l2_normalized.sum(axis=1), axis=0)
 
-            # Stacked transaction count chart
+            #Stacked transaction count chart
             fig_stacked_l2_txs = go.Figure()
             for column in columns:
                 if column != 'Ethereum':
@@ -430,18 +427,12 @@ class App:
 
             fig_normalized_l2_txs = go.Figure()
 
-            fig_normalized_l2_txs.add_trace(go.Bar(
-                x=df_l2_transactions_detailed['date'],
-                y=df_l2_normalized['Ethereum'],
-                name='Ethereum',
-                marker_color='black'
-            ))
-
-            for column in columns_reordered[1:]:
+            for column in columns_reordered:
                 fig_normalized_l2_txs.add_trace(go.Bar(
                     x=df_l2_transactions_detailed['date'],
                     y=df_l2_normalized[column],
-                    name=column
+                    name=column,
+                    marker_color='black' if column == 'Ethereum' else None
                 ))
 
             fig_normalized_l2_txs.update_layout(
@@ -449,7 +440,12 @@ class App:
                 xaxis_title='Date',
                 yaxis_title='Percentage Share',
                 barmode='stack',
-                legend=dict(x=0, y=1, orientation='h')
+                legend=dict(x=0, y=1, orientation='h'),
+                yaxis=dict(
+                    type='linear',
+                    range=[0, 1],  # Set the range from 0 to 1 (0% to 100%)
+                    tickformat=',.0%'  # Format ticks as percentages
+                )
             )
             st.plotly_chart(fig_normalized_l2_txs, use_container_width=True)
 
@@ -501,7 +497,12 @@ class App:
                 xaxis_title='Date',
                 yaxis_title='Percentage Share',
                 barmode='stack',
-                legend=dict(x=0, y=1, orientation='h')
+                legend=dict(x=0, y=1, orientation='h'),
+                yaxis=dict(
+                    type='linear',
+                    range=[0, 1],  # Set the range from 0 to 1 (0% to 100%)
+                    tickformat=',.0%'  # Format ticks as percentages
+                )
             )
             st.plotly_chart(fig_l2_vs_ethereum, use_container_width=True)
 
@@ -510,7 +511,6 @@ class App:
 
         else:
             st.warning("Data fetching was incomplete. Please try running the app again.")
-
 # Futures Tab ---------------------------------------------------------------------------------
     def tabBTCETHFutures(self):
         st.header("BTC/ETH Futures")
